@@ -126,6 +126,9 @@ bool Pid::init(const ros::NodeHandle &node, const bool quiet)
 
   nh.param("publish_state", publish_state_, false);
 
+
+  nh.param("antiwindup", antiwindup_, false);
+
   if(publish_state_){
     state_publisher_.init(nh, "state", 1);
   }
@@ -336,18 +339,27 @@ double Pid::computeCommand(double error, double error_dot, ros::Duration dt)
   if (dt == ros::Duration(0.0) || std::isnan(error) || std::isinf(error) || std::isnan(error_dot) || std::isinf(error_dot))
     return 0.0;
 
-
   // Calculate proportional contribution to command
   p_term = gains.p_gain_ * p_error_;
 
   // Calculate the integral of the position error
   i_error_ += dt.toSec() * p_error_;
-  
+
+  if(antiwindup_)
+  {
+    // Prevent i_error_ from climbing higher than permitted by i_max_/i_min_
+    i_error_ = std::max(gains.i_min_ / gains.i_gain_, std::min(i_error_, gains.i_max_ / gains.i_gain_));
+//    ROS_INFO_STREAM("aw " << gains.i_max_ / gains.i_gain_);
+  }
+
   // Calculate integral contribution to command
   i_term = gains.i_gain_ * i_error_;
 
-  // Limit i_term so that the limit is meaningful in the output
-  i_term = std::max( gains.i_min_, std::min( i_term, gains.i_max_) );
+  if(!antiwindup_)
+  {
+    // Limit i_term so that the limit is meaningful in the output
+    i_term = std::max(gains.i_min_, std::min(i_term, gains.i_max_));
+  }
 
   // Calculate derivative contribution to command
   d_term = gains.d_gain_ * d_error_;
