@@ -272,40 +272,18 @@ void Pid::dynamicReconfigCallback(control_toolbox::ParametersConfig &config, uin
 
 double Pid::computeCommand(double error, ros::Duration dt)
 {
-  // Get the gain parameters from the realtime buffer
-  Gains gains = *gains_buffer_.readFromRT();
-
-  double p_term, d_term, i_term;
-  p_error_ = error; // this is error = target - state
 
   if (dt == ros::Duration(0.0) || std::isnan(error) || std::isinf(error))
     return 0.0;
 
-  // Calculate proportional contribution to command
-  p_term = gains.p_gain_ * p_error_;
-
-  // Calculate the integral of the position error
-  i_error_ += dt.toSec() * p_error_;
-  
-  // Calculate integral contribution to command
-  i_term = gains.i_gain_ * i_error_;
-
-  // Limit i_term so that the limit is meaningful in the output
-  i_term = std::max( gains.i_min_, std::min( i_term, gains.i_max_) );
-
   // Calculate the derivative error
   if (dt.toSec() > 0.0)
   {
-    d_error_ = (p_error_ - p_error_last_) / dt.toSec();
-    p_error_last_ = p_error_;
+    d_error_ = (error - p_error_last_) / dt.toSec();
+    p_error_last_ = error;
   }
-  // Calculate derivative contribution to command
-  d_term = gains.d_gain_ * d_error_;
 
-  // Compute the command
-  cmd_ = p_term + i_term + d_term;
-
-  return cmd_;
+  return computeCommand(error, d_error_, dt);
 }
 
 double Pid::updatePid(double error, ros::Duration dt)
@@ -343,16 +321,6 @@ double Pid::updatePid(double error, ros::Duration dt)
   // Compute the command
   cmd_ = - p_term - i_term - d_term;
 
-  if (publish_state_ && state_publisher_.trylock())
-  {
-    state_publisher_.msg_.error = error;
-    state_publisher_.msg_.p_term = p_term;
-    state_publisher_.msg_.i_term = i_term;
-    state_publisher_.msg_.d_term = d_term;
-    state_publisher_.msg_.command = cmd_;
-    state_publisher_.unlockAndPublish();
-  }
-
   return cmd_;
 }
 
@@ -387,6 +355,16 @@ double Pid::computeCommand(double error, double error_dot, ros::Duration dt)
   // Compute the command
   cmd_ = - p_term - i_term - d_term;
 
+  if (publish_state_ && state_publisher_.trylock())
+  {
+    state_publisher_.msg_.error = error;
+    state_publisher_.msg_.p_term = p_term;
+    state_publisher_.msg_.i_term = i_term;
+    state_publisher_.msg_.d_term = d_term;
+    state_publisher_.msg_.command = cmd_;
+    state_publisher_.unlockAndPublish();
+  }
+
   return cmd_;
 }
 
@@ -408,7 +386,7 @@ double Pid::updatePid(double error, double error_dot, ros::Duration dt)
 
   // Calculate the integral of the position error
   i_error_ += dt.toSec() * p_error_;
-  
+
   // Calculate integral contribution to command
   i_term = gains.i_gain_ * i_error_;
 
