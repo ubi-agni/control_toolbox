@@ -343,16 +343,6 @@ double Pid::updatePid(double error, ros::Duration dt)
   // Compute the command
   cmd_ = - p_term - i_term - d_term;
 
-  if (publish_state_ && state_publisher_.trylock())
-  {
-    state_publisher_.msg_.error = error;
-    state_publisher_.msg_.p_term = p_term;
-    state_publisher_.msg_.i_term = i_term;
-    state_publisher_.msg_.d_term = d_term;
-    state_publisher_.msg_.command = cmd_;
-    state_publisher_.unlockAndPublish();
-  }
-
   return cmd_;
 }
 
@@ -420,6 +410,25 @@ double Pid::updatePid(double error, double error_dot, ros::Duration dt)
 
   // Compute the command
   cmd_ = - p_term - i_term - d_term;
+
+  // Publish controller state if configured
+  if (publish_state_ && state_publisher_.trylock())
+  {
+    state_publisher_.msg_.header.stamp = ros::Time::now();
+    state_publisher_.msg_.error = error;
+    state_publisher_.msg_.error_dot = error_dot;
+    state_publisher_.msg_.dt = dt.toSec();
+    state_publisher_.msg_.p_error = p_error_;
+    state_publisher_.msg_.i_error = i_error_;
+    state_publisher_.msg_.d_error = d_error_;
+    state_publisher_.msg_.p_term = p_term;
+    state_publisher_.msg_.i_term = i_term;
+    state_publisher_.msg_.d_term = d_term;
+    state_publisher_.msg_.i_max = gains.i_max_;
+    state_publisher_.msg_.i_min = gains.i_min_;
+    state_publisher_.msg_.command = cmd_;
+    state_publisher_.unlockAndPublish();
+  }
 
   return cmd_;
 }
