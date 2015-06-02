@@ -30,9 +30,9 @@ TEST(ParameterTest, zeroITermBadIBoundsTest)
   EXPECT_FALSE(boost::math::isnan(cmd));
 }
 
-TEST(ParameterTest, integrationWindupTest)
+TEST(ParameterTest, integrationClampTest)
 {
-  RecordProperty("description","This test succeeds if the integral contribution is prevented from winding up when the integral gain is non-zero.");
+  RecordProperty("description","This test succeeds if the integral contribution is clamped when the integral gain is non-zero.");
 
   Pid pid(0.0, 2.0, 0.0, 1.0, -1.0);
 
@@ -46,9 +46,9 @@ TEST(ParameterTest, integrationWindupTest)
   EXPECT_EQ(-1.0, cmd);
 }
 
-TEST(ParameterTest, integrationWindupZeroGainTest)
+TEST(ParameterTest, integrationClampZeroGainTest)
 {
-  RecordProperty("description","This test succeeds if the integral contribution is prevented from winding up when the integral gain is zero. If the integral contribution is allowed to wind up while it is disabled, it can cause sudden jumps to the minimum or maximum bound in control command when re-enabled.");
+  RecordProperty("description","This test succeeds if the integral contribution is clamped when the integral gain is zero. If the integral contribution is not clamped while it is disabled, it can cause sudden jumps to the minimum or maximum bound in control command when re-enabled.");
 
   double i_gain = 0.0;
   double i_min = -1.0;
