@@ -45,8 +45,8 @@ namespace control_toolbox {
 
 static const std::string DEFAULT_NAMESPACE = "pid"; // \todo better default prefix?
 
-Pid::Pid(double p, double i, double d, double i_max, double i_min)
-  : dynamic_reconfig_initialized_(false)
+Pid::Pid(double p, double i, double d, double i_max, double i_min, bool antiwindup)
+  : dynamic_reconfig_initialized_(false), antiwindup_(antiwindup)
 {
   setGains(p,i,d,i_max,i_min);
 
