@@ -44,6 +44,12 @@ TEST(ParameterTest, integrationClampTest)
 
   cmd = pid.computeCommand(-1.0, ros::Duration(1.0));
   EXPECT_EQ(-1.0, cmd);
+
+  cmd = pid.computeCommand(1.0, ros::Duration(1.0));
+  EXPECT_EQ(-1.0, cmd);
+
+  cmd = pid.computeCommand(-1.0, ros::Duration(1.0));
+  EXPECT_EQ(-1.0, cmd);
 }
 
 TEST(ParameterTest, integrationClampZeroGainTest)
@@ -70,6 +76,28 @@ TEST(ParameterTest, integrationClampZeroGainTest)
   EXPECT_EQ(0.0, cmd);
 }
 
+TEST(ParameterTest, integrationAntiwindupTest)
+{
+  RecordProperty("description","This test succeeds if the integral error is prevented from winding up.");
+
+  Pid pid(0.0, 2.0, 0.0, 1.0, -1.0, true);
+
+  double cmd = 0.0;
+  double pe,ie,de;
+
+  cmd = pid.computeCommand(-1.0, ros::Duration(1.0));
+  EXPECT_EQ(-1.0, cmd);
+
+  cmd = pid.computeCommand(-1.0, ros::Duration(1.0));
+  EXPECT_EQ(-1.0, cmd);
+
+  cmd = pid.computeCommand(0.5, ros::Duration(1.0));
+  EXPECT_EQ(0.0, cmd);
+
+  cmd = pid.computeCommand(-1.0, ros::Duration(1.0));
+  EXPECT_EQ(-1.0, cmd);
+}
+
 TEST(ParameterTest, gainSettingCopyPIDTest)
 {
   RecordProperty("description","This test succeeds if a PID object has its gain set at different points in time then the values are get-ed and still remain the same, as well as when PID is copied.");
@@ -83,7 +111,7 @@ TEST(ParameterTest, gainSettingCopyPIDTest)
 
   // Initialize the default way
   Pid pid1(p_gain, i_gain, d_gain, i_max, i_min);
-  
+
   // Test return values  -------------------------------------------------
   double p_gain_return, i_gain_return, d_gain_return, i_max_return, i_min_return;
   pid1.getGains(p_gain_return, i_gain_return, d_gain_return, i_max_return, i_min_return);
@@ -112,7 +140,7 @@ TEST(ParameterTest, gainSettingCopyPIDTest)
   EXPECT_EQ(i_min, g1.i_min_);
 
   // \todo test initParam() -------------------------------------------------
-  
+
 
   // \todo test bool init(const ros::NodeHandle &n); -----------------------------------
 
@@ -138,7 +166,7 @@ TEST(ParameterTest, gainSettingCopyPIDTest)
   EXPECT_EQ(0.0, pe);
   EXPECT_EQ(0.0, ie);
   EXPECT_EQ(0.0, de);
-    
+
   // Test assignment constructor -------------------------------------------------
   Pid pid3;
   pid3 = pid1;
