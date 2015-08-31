@@ -37,6 +37,7 @@
 
 #include <string>
 #include <ros/ros.h>
+#include <control_msgs/PidState.h>
 
 // Dynamic reconfigure
 #include <dynamic_reconfigure/server.h>
@@ -45,6 +46,7 @@
 
 // Realtime buffer
 #include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_publisher.h>
 
 class TiXmlElement;
 
@@ -371,6 +373,8 @@ private:
   realtime_tools::RealtimeBuffer<Gains> gains_buffer_;
 
   bool antiwindup_;
+  realtime_tools::RealtimePublisher<control_msgs::PidState> state_publisher_;
+  bool publish_state_;
 
   double p_error_last_; /**< _Save position state for derivative state calculation. */
   double p_error_; /**< Position error. */
