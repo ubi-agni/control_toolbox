@@ -67,8 +67,8 @@ Pid::~Pid()
 {
 }
 
-void Pid::initPid(double p, double i, double d, double i_max, double i_min, bool antiwindup,
-  const ros::NodeHandle &node)
+void Pid::initPid(double p, double i, double d, double i_max, double i_min, const ros::NodeHandle &node,
+ bool antiwindup)
 {
   initPid(p, i, d, i_max, i_min, antiwindup);
 
@@ -198,6 +198,17 @@ void Pid::getGains(double &p, double &i, double &d, double &i_max, double &i_min
   i_max = gains.i_max_;
   i_min = gains.i_min_;
   antiwindup = gains.antiwindup_;
+}
+
+void Pid::getGains(double &p, double &i, double &d, double &i_max, double &i_min)
+{
+  Gains gains = *gains_buffer_.readFromRT();
+
+  p     = gains.p_gain_;
+  i     = gains.i_gain_;
+  d     = gains.d_gain_;
+  i_max = gains.i_max_;
+  i_min = gains.i_min_;
 }
 
 Pid::Gains Pid::getGains()
