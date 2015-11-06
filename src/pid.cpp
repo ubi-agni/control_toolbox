@@ -125,6 +125,7 @@ bool Pid::init(const ros::NodeHandle &node, const bool quiet)
   }
 
   nh.param("antiwindup", antiwindup_, false);
+  gains.antiwindup_ = antiwindup_;
   nh.param("publish_state", publish_state_, false);
 
   if(publish_state_){
